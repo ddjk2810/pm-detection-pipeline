@@ -1,0 +1,118 @@
+name: Daily PM Detection Pipeline
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  workflow_dispatch:
+    inputs:
+      skip_rescan:
+        description: 'Skip chunk re-scan'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install chromium && playwright install-deps chromium
+
+      - name: Run pipeline
+        id: pipeline
+        continue-on-error: true
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.skip_rescan }}" = "true" ]; then
+            FLAGS="$FLAGS --skip-rescan"
+          fi
+          python pipeline.py $FLAGS
+
+      - name: Read summary for GitHub Issue
+        id: summary
+        run: |
+          if [ -f daily_summary_title.txt ]; then
+            echo "has_summary=true" >> $GITHUB_OUTPUT
+            TITLE=$(cat daily_summary_title.txt)
+            echo "title=$TITLE" >> $GITHUB_OUTPUT
+          else
+            echo "has_summary=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Issue with daily summary
+        if: steps.summary.outputs.has_summary == 'true'
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: ${{ steps.summary.outputs.title }}
+          content-filepath: ./daily_summary.md
+          labels: |
+            automated
+            pm-detection
+
+      - name: Create rotation report issue
+        if: hashFiles('data/rotation_summary.md') != ''
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "Rotation Report - ${{ steps.summary.outputs.title }}"
+          content-filepath: data/rotation_summary.md
+          labels: |
+            automated
+            pm-detection
+            rotation-report
+
+      - name: Read pipeline state for commit message
+        id: state
+        run: |
+          CHUNK_INFO=$(python -c "
+          import json, os
+          state_path = 'data/pipeline_state.json'
+          if os.path.exists(state_path):
+              with open(state_path) as f:
+                  s = json.load(f)
+              print(f'chunk {s[\"last_chunk_index\"]}/{s[\"total_chunks\"]}')
+          else:
+              print('no state')
+          ")
+          echo "chunk_info=$CHUNK_INFO" >> $GITHUB_OUTPUT
+
+      - name: Commit and push
+        run: |
+          rm -f daily_summary.md daily_summary_title.txt
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Daily scan: $(date +%Y-%m-%d) - ${{ steps.state.outputs.chunk_info }}"
+            git push
+          fi
+
+      - name: Fail if pipeline failed
+        if: steps.pipeline.outcome == 'failure'
+        run: |
+          echo "Pipeline failed but changes were committed. Check logs above."
+          exit 1

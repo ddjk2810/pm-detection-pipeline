@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Databases (ephemeral, seeded from pm_results.csv each CI run)
+*.db
+
+# Intermediate files
+data/chunk_domains.csv
+data/chunk_results.csv
+data/rotation_summary.md
+daily_summary.md
+daily_summary_title.txt
+
+# Logs
+*.log
