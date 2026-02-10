@@ -1,1 +1,6 @@
-{"last_chunk_index": -1, "last_run_date": null, "last_snapshot_date": "2026-02-02", "total_chunks": 8}
+{
+  "last_chunk_index": 0,
+  "last_run_date": "2026-02-10",
+  "last_snapshot_date": "2026-02-02",
+  "total_chunks": 8
+}
