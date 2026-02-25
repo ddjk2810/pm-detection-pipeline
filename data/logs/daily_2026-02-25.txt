@@ -1,0 +1,48 @@
+PM Detection Pipeline: 2026-02-25
+============================================================
+
+CHUNK RE-SCAN
+----------------------------------------
+Chunk: 4/8
+Domains re-scanned: 1030
+DNS recovered: 15
+Rotation complete: No
+
+DATABASE SUMMARY
+----------------------------------------
+Total domains: 8,239
+Detected (known PM): 5,531 (67.1%)
+Unknown: 2,673
+
+Market share:
+  appfolio: 3,165
+  buildium: 719
+  rentmanager: 355
+  rentvine: 292
+  propertyware: 288
+  yardi: 270
+  cincwebaxis: 60
+  realpage: 56
+  doorloop: 53
+  vantaca: 38
+  guesty: 35
+  rentecdirect: 32
+  propertyboss: 28
+  heropm: 19
+  townsq: 19
+  entrata: 17
+  frontsteps: 12
+  inosio: 12
+  trackhs: 10
+  prospectportal: 9
+  tenantcloud: 9
+  mri: 7
+  managego: 6
+  building_engines: 4
+  happystays: 4
+  ownerrez: 4
+  turbotenant: 3
+  sentry: 2
+  innago: 1
+  sensrportal: 1
+  tenant_turner: 1
